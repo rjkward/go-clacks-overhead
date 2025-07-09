@@ -1,7 +1,6 @@
 package clacks
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -41,10 +40,4 @@ func (c *RoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
 	}
 
 	return c.Transport.RoundTrip(r)
-}
-
-type GetMessagesFn func(context.Context, *http.Request) ([]string, error)
-
-func GetDefaultMessage(context.Context, *http.Request) ([]string, error) {
-	return []string{DefaultMessage}, nil
 }

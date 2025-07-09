@@ -32,9 +32,8 @@ func Middleware(optFns ...MiddlewareOptFn) func(http.Handler) http.Handler {
 				return
 			}
 
-			if !opts.HandleIncomingMessages {
-				// Don't check for clacks overhead messages in the request.
-				// Just add the header to the response and don't do anything fancy.
+			in := r.Header.Values(OverheadHeaderKey)
+			if len(in) == 0 {
 				for _, msg := range msgs {
 					w.Header().Add(OverheadHeaderKey, msg)
 				}
@@ -44,8 +43,8 @@ func Middleware(optFns ...MiddlewareOptFn) func(http.Handler) http.Handler {
 			}
 
 			// Process incoming clacks overhead messages in request headers.
-			in := r.Header.Values(OverheadHeaderKey)
 			out := make(map[string]struct{}, len(in)+len(msgs))
+			var sendOnMsgs []string
 			for _, msg := range in {
 				codes := GetCodesFromOverhead(msg)
 
@@ -54,13 +53,25 @@ func Middleware(optFns ...MiddlewareOptFn) func(http.Handler) http.Handler {
 					opts.Logger.Print(fmt.Sprintf("Received Clacks Overhead message: %q", msg))
 				}
 
-				// Send on.
-				if strings.Contains(codes, CodeSendOn) || strings.Contains(codes, CodeTurnAround) {
+				// Turn around
+				if strings.Contains(codes, CodeTurnAround) {
 					out[msg] = struct{}{}
+				}
+
+				// Send on.
+				if opts.SendOnHandler != nil && strings.Contains(codes, CodeSendOn) {
+					sendOnMsgs = append(sendOnMsgs, msg)
 				}
 			}
 
+			// The intent here is to enable clacks overhead messages with the 'G' code (send on) to "escape" the current request
+			// context and perhaps be included in other requests/responses. Always going home.
+			if opts.SendOnHandler != nil {
+				opts.SendOnHandler(r.Context(), r, sendOnMsgs)
+			}
+
 			// Process outgoing clacks overhead messages.
+			// Map to prevent duplication.
 			for _, msg := range msgs {
 				out[msg] = struct{}{}
 			}
@@ -94,10 +105,10 @@ func GetCodesFromOverhead(msg string) string {
 }
 
 type MiddlewareOpts struct {
-	GetOverheadMessages    GetMessagesFn
-	Logger                 Logger
-	HandleIncomingMessages bool
-	SendOnHandler          func(context.Context, http.Request, []string)
+	GetOverheadMessages GetMessagesFn
+	Logger              Logger
+	// Will be called on any X-Clacks-Overhead messages with the 'G' code in the incoming request if HandleIncomingMessages is true.
+	SendOnHandler HandleSendOnMessagesFn
 }
 
 type MiddlewareOptFn func(*MiddlewareOpts)
@@ -113,6 +124,12 @@ func WithOverheadMessages(msgs ...string) MiddlewareOptFn {
 		o.GetOverheadMessages = func(ctx context.Context, r *http.Request) ([]string, error) {
 			return msgs, nil
 		}
+	}
+}
+
+func WithSendOnHandler(handler HandleSendOnMessagesFn) MiddlewareOptFn {
+	return func(o *MiddlewareOpts) {
+		o.SendOnHandler = handler
 	}
 }
 
