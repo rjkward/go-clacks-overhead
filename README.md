@@ -1,6 +1,6 @@
 # go-clacks-overhead
 
-Drop in solution to add the [X-Clacks-Overhead](http://www.gnuterrypratchett.com/) header value `GNU Terry Pratchett` to all http requests.
+Drop-in solution to add the [X-Clacks-Overhead](http://www.gnuterrypratchett.com/) header value `GNU Terry Pratchett` to all http requests.
 
 # client
 
