@@ -1,7 +1,6 @@
 package clacks
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -9,13 +8,11 @@ import (
 
 // Identical to http.DefaultClient except it will send "GNU Terry Pratchett"
 // as a X-Clacks-Overhead header with every request.
-func DefaultClient() *http.Client {
-	return &http.Client{
-		Transport: &RoundTripper{
-			GetOverheadMessages: GetDefaultMessage,
-			Transport:           http.DefaultTransport,
-		},
-	}
+var DefaultClient = &http.Client{
+	Transport: &RoundTripper{
+		GetOverheadMessages: GetDefaultMessage,
+		Transport:           http.DefaultTransport,
+	},
 }
 
 type RoundTripper struct {
@@ -43,10 +40,4 @@ func (c *RoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
 	}
 
 	return c.Transport.RoundTrip(r)
-}
-
-type GetMessagesFn func(context.Context, *http.Request) ([]string, error)
-
-func GetDefaultMessage(context.Context, *http.Request) ([]string, error) {
-	return []string{DefaultMessage}, nil
 }

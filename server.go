@@ -1,16 +1,17 @@
 package clacks
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
 )
 
-// Middleware implements the Clacks Overhead protocol. It will handle incoming overhead messages
-// appropriately and include "GNU Terry Pratchett" as an overhead in every response by default.
+// Middleware will include "GNU Terry Pratchett" as an overhead in every response by default.
+// More complex behaviour can be enabled by passing options.
 func Middleware(optFns ...MiddlewareOptFn) func(http.Handler) http.Handler {
 	opts := &MiddlewareOpts{
-		OverheadMessages: []string{DefaultMessage},
+		GetOverheadMessages: GetDefaultMessage,
 	}
 
 	for _, optFn := range optFns {
@@ -19,9 +20,31 @@ func Middleware(optFns ...MiddlewareOptFn) func(http.Handler) http.Handler {
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Process incoming clacks overhead messages.
+			msgs, err := opts.GetOverheadMessages(r.Context(), r)
+			if err != nil {
+				// If we can't get the clacks overhead values log the error but handle the request as normal.
+				// No point in killing the request for the sake of this header - Sorry Terry!
+				if opts.Logger != nil {
+					opts.Logger.Error("Clacks Overhead Middleware: could not get overhead messages", err)
+				}
+
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			in := r.Header.Values(OverheadHeaderKey)
-			out := make(map[string]struct{}, len(in)+len(opts.OverheadMessages))
+			if len(in) == 0 {
+				for _, msg := range msgs {
+					w.Header().Add(OverheadHeaderKey, msg)
+				}
+
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			// Process incoming clacks overhead messages in request headers.
+			out := make(map[string]struct{}, len(in)+len(msgs))
+			var sendOnMsgs []string
 			for _, msg := range in {
 				codes := GetCodesFromOverhead(msg)
 
@@ -30,14 +53,26 @@ func Middleware(optFns ...MiddlewareOptFn) func(http.Handler) http.Handler {
 					opts.Logger.Print(fmt.Sprintf("Received Clacks Overhead message: %q", msg))
 				}
 
-				// Send on.
-				if strings.Contains(codes, CodeSendOn) || strings.Contains(codes, CodeTurnAround) {
+				// Turn around
+				if strings.Contains(codes, CodeTurnAround) {
 					out[msg] = struct{}{}
+				}
+
+				// Send on.
+				if opts.SendOnHandler != nil && strings.Contains(codes, CodeSendOn) {
+					sendOnMsgs = append(sendOnMsgs, msg)
 				}
 			}
 
+			// The intent here is to enable clacks overhead messages with the 'G' code (send on) to "escape" the current request
+			// context and perhaps be included in other requests/responses. Always going home.
+			if opts.SendOnHandler != nil {
+				opts.SendOnHandler(r.Context(), r, sendOnMsgs)
+			}
+
 			// Process outgoing clacks overhead messages.
-			for _, msg := range opts.OverheadMessages {
+			// Map to prevent duplication.
+			for _, msg := range msgs {
 				out[msg] = struct{}{}
 			}
 
@@ -62,7 +97,7 @@ func GetCodesFromOverhead(msg string) string {
 
 	ss := strings.Split(msg, " ")
 	for _, c := range ss[0] {
-		if c < 'A' || c > 'Z' {
+		if c < 'A' || 'Z' < c {
 			return ""
 		}
 	}
@@ -70,8 +105,10 @@ func GetCodesFromOverhead(msg string) string {
 }
 
 type MiddlewareOpts struct {
-	OverheadMessages []string
-	Logger           Logger
+	GetOverheadMessages GetMessagesFn
+	Logger              Logger
+	// Will be called on any X-Clacks-Overhead messages with the 'G' code in the incoming request.
+	SendOnHandler HandleSendOnMessagesFn
 }
 
 type MiddlewareOptFn func(*MiddlewareOpts)
@@ -84,10 +121,19 @@ func WithLogger(l Logger) MiddlewareOptFn {
 
 func WithOverheadMessages(msgs ...string) MiddlewareOptFn {
 	return func(o *MiddlewareOpts) {
-		o.OverheadMessages = msgs
+		o.GetOverheadMessages = func(ctx context.Context, r *http.Request) ([]string, error) {
+			return msgs, nil
+		}
+	}
+}
+
+func WithSendOnHandler(handler HandleSendOnMessagesFn) MiddlewareOptFn {
+	return func(o *MiddlewareOpts) {
+		o.SendOnHandler = handler
 	}
 }
 
 type Logger interface {
 	Print(v ...any)
+	Error(v ...any)
 }
