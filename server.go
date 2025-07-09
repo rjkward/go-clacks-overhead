@@ -107,7 +107,7 @@ func GetCodesFromOverhead(msg string) string {
 type MiddlewareOpts struct {
 	GetOverheadMessages GetMessagesFn
 	Logger              Logger
-	// Will be called on any X-Clacks-Overhead messages with the 'G' code in the incoming request if HandleIncomingMessages is true.
+	// Will be called on any X-Clacks-Overhead messages with the 'G' code in the incoming request.
 	SendOnHandler HandleSendOnMessagesFn
 }
 
