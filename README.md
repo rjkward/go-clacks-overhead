@@ -4,7 +4,7 @@ Drop in solution to add the [X-Clacks-Overhead](http://www.gnuterrypratchett.com
 
 # client
 
-```
+```Go
 req := http.NewRequest(http.MethodGet, "www.example.com", http.NoBody)
 
 res, err := clacks.DefaultClient.Do(req)
@@ -12,7 +12,7 @@ res, err := clacks.DefaultClient.Do(req)
 
 # server
 
-```
+```Go
 r := mux.NewRouter()
 
 r.Use(clacks.Middleware())
