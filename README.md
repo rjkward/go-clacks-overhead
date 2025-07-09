@@ -4,7 +4,9 @@ Drop-in solution to add the [X-Clacks-Overhead](http://www.gnuterrypratchett.com
 
 # install
 
-`go get github.com/rjkward/go-clacks-overhead`
+```
+go get github.com/rjkward/go-clacks-overhead
+```
 
 # client
 
