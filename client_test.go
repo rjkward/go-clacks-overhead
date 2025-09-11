@@ -78,3 +78,54 @@ func TestRountTripper(t *testing.T) {
 		})
 	}
 }
+
+func TestRoundTripper_Copy(t *testing.T) {
+	mt := new(mockTransport)
+	rt := &RoundTripper{
+		GetOverheadMessages: func(ctx context.Context, r *http.Request) ([]string, error) {
+			return []string{"test"}, nil
+		},
+		Transport: mt,
+	}
+
+	req1 := httptest.NewRequest(http.MethodGet, "http://example.com", nil)
+	res1, err := rt.RoundTrip(req1)
+	require.NoError(t, err)
+	require.True(t, mt.Called)
+	require.Equal(t, http.StatusOK, res1.StatusCode)
+	require.NotSame(t, req1, mt.Req)
+	require.Equal(t, []string{"test"}, mt.Req.Header.Values(OverheadHeaderKey))
+
+	// reset for non copy test
+	mt = new(mockTransport)
+	rt = &RoundTripper{
+		GetOverheadMessages: func(ctx context.Context, r *http.Request) ([]string, error) {
+			return []string{"test"}, nil
+		},
+		Transport: mt,
+		// disable copying of request
+		UseOriginalRequest: true,
+	}
+
+	req2 := httptest.NewRequest(http.MethodGet, "http://example.com", nil)
+	res2, err := rt.RoundTrip(req2)
+	require.NoError(t, err)
+	require.True(t, mt.Called)
+	require.Equal(t, http.StatusOK, res2.StatusCode)
+	require.Same(t, req2, mt.Req)
+	require.Equal(t, []string{"test"}, mt.Req.Header.Values(OverheadHeaderKey))
+}
+
+type mockTransport struct {
+	Req    *http.Request
+	Called bool
+}
+
+func (m *mockTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	m.Called = true
+	m.Req = r
+	return &http.Response{
+		StatusCode: http.StatusOK,
+		Body:       http.NoBody,
+	}, nil
+}

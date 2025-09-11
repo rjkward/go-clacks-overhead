@@ -22,7 +22,7 @@ func Middleware(optFns ...MiddlewareOptFn) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			msgs, err := opts.GetOverheadMessages(r.Context(), r)
 			if err != nil {
-				// If we can't get the clacks overhead values log the error but handle the request as normal.
+				// If we can't get the outgoing clacks overhead values log the error but handle the request as normal.
 				// No point in killing the request for the sake of this header - Sorry Terry!
 				if opts.Logger != nil {
 					opts.Logger.Error("Clacks Overhead Middleware: could not get overhead messages", err)
