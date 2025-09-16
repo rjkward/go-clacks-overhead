@@ -22,7 +22,7 @@ func Middleware(optFns ...MiddlewareOptFn) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			msgs, err := opts.GetOverheadMessages(r.Context(), r)
 			if err != nil {
-				// If we can't get the clacks overhead values log the error but handle the request as normal.
+				// If we can't get the outgoing clacks overhead values log the error but handle the request as normal.
 				// No point in killing the request for the sake of this header - Sorry Terry!
 				if opts.Logger != nil {
 					opts.Logger.Error("Clacks Overhead Middleware: could not get overhead messages", err)
@@ -67,7 +67,10 @@ func Middleware(optFns ...MiddlewareOptFn) func(http.Handler) http.Handler {
 			// The intent here is to enable clacks overhead messages with the 'G' code (send on) to "escape" the current request
 			// context and perhaps be included in other requests/responses. Always going home.
 			if opts.SendOnHandler != nil {
-				opts.SendOnHandler(r.Context(), r, sendOnMsgs)
+				err = opts.SendOnHandler(r.Context(), r, sendOnMsgs)
+				if err != nil && opts.Logger != nil {
+					opts.Logger.Error("Clacks Overhead Middleware: could not handle send-on messages", sendOnMsgs, err)
+				}
 			}
 
 			// Process outgoing clacks overhead messages.

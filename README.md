@@ -4,28 +4,36 @@ Drop-in solution to add the [X-Clacks-Overhead](http://www.gnuterrypratchett.com
 
 # install
 
-```
+```bash
 go get github.com/rjkward/go-clacks-overhead
-```
-
-# client
-
-```Go
-req := http.NewRequest(http.MethodGet, "www.example.com", http.NoBody)
-
-res, err := clacks.DefaultClient.Do(req)
 ```
 
 # server
 
-```Go
+```go
 r := mux.NewRouter()
 
 r.Use(clacks.Middleware())
 
 r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
     w.Write([]byte("OK"))
-}).Methods("GET")
+}).Methods(http.MethodGet)
 
 log.Fatal(http.ListenAndServe(":8080", r))
+```
+
+# client
+
+```go
+req, _ := http.NewRequest(http.MethodGet, "http://www.example.com", http.NoBody)
+
+res, _ := clacks.DefaultClient.Do(req)
+```
+
+Alternatively use the transport in your custom client:
+
+```go
+customClient := &http.Client{
+    Transport: clacks.DefaultTransport,
+}
 ```

@@ -9,10 +9,14 @@ import (
 // Identical to http.DefaultClient except it will send "GNU Terry Pratchett"
 // as a X-Clacks-Overhead header with every request.
 var DefaultClient = &http.Client{
-	Transport: &RoundTripper{
-		GetOverheadMessages: GetDefaultMessage,
-		Transport:           http.DefaultTransport,
-	},
+	Transport: DefaultTransport,
+}
+
+// Identical to http.DefaultTransport except it will send "GNU Terry Pratchett"
+// as a X-Clacks-Overhead header with every request.
+var DefaultTransport = &RoundTripper{
+	GetOverheadMessages: GetDefaultMessage,
+	Transport:           http.DefaultTransport,
 }
 
 type RoundTripper struct {
