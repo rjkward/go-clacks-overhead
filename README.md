@@ -17,7 +17,7 @@ r.Use(clacks.Middleware())
 
 r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
     w.Write([]byte("OK"))
-}).Methods("GET")
+}).Methods(http.MethodGet)
 
 log.Fatal(http.ListenAndServe(":8080", r))
 ```
