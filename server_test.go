@@ -235,6 +235,34 @@ func TestGetCodesFromOverhead(t *testing.T) {
 	}
 }
 
+func TestWithLogger(t *testing.T) {
+	logger := &mockLogger{}
+	opts := &MiddlewareOpts{}
+	WithLogger(logger)(opts)
+	require.Equal(t, logger, opts.Logger)
+}
+
+func TestWithOverheadMessages(t *testing.T) {
+	msgs := []string{"test1", "test2"}
+	opts := &MiddlewareOpts{}
+	WithOverheadMessages(msgs...)(opts)
+	got, err := opts.GetOverheadMessages(context.Background(), nil)
+	require.NoError(t, err)
+	require.Equal(t, msgs, got)
+}
+
+func TestWithSendOnHandler(t *testing.T) {
+	var out []string
+	handler := func(ctx context.Context, r *http.Request, msgs []string) error {
+		out = append(out, msgs...)
+		return nil
+	}
+	opts := &MiddlewareOpts{}
+	WithSendOnHandler(handler)(opts)
+	opts.SendOnHandler(context.Background(), nil, []string{"test"})
+	require.Equal(t, []string{"test"}, out)
+}
+
 type mockLogger struct {
 	Logs   []string
 	Errors []string
