@@ -1,5 +1,6 @@
 package clacks
 
+// The key for the Clacks Overhead header. See http://www.gnuterrypratchett.com/.
 const OverheadHeaderKey = "X-Clacks-Overhead"
 
 // Send the message on.
