@@ -6,19 +6,22 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Identical to http.DefaultClient except it will send "GNU Terry Pratchett"
+// DefaultClient is identical to http.DefaultClient except it will send "GNU Terry Pratchett"
 // as a X-Clacks-Overhead header with every request.
 var DefaultClient = &http.Client{
 	Transport: DefaultTransport,
 }
 
-// Identical to http.DefaultTransport except it will send "GNU Terry Pratchett"
+// DefaultTransport is identical to http.DefaultTransport except it will send "GNU Terry Pratchett"
 // as a X-Clacks-Overhead header with every request.
 var DefaultTransport = &RoundTripper{
 	GetOverheadMessages: GetDefaultMessage,
 	Transport:           http.DefaultTransport,
 }
 
+// RoundTripper is an http.RoundTripper that will add X-Clacks-Overhead headers to requests.
+// By default it will add "GNU Terry Pratchett" to every request, but this can be changed by
+// setting GetOverheadMessages. Unless UseOriginalRequest is set to true, the request will be cloned.
 type RoundTripper struct {
 	GetOverheadMessages GetMessagesFn
 	Transport           http.RoundTripper
