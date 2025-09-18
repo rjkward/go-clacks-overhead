@@ -88,6 +88,8 @@ func Middleware(optFns ...MiddlewareOptFn) func(http.Handler) http.Handler {
 	}
 }
 
+// GetCodesFromOverhead extracts the clacks codes from an overhead message.
+// Passing "GNU incoming msg" returns "GNU".
 // The clacks protocol is not well-defined in the Discworld corpus.
 // We make some assumptions when extracting codes:
 //  1. Clacks codes go at the start of the message and are followed by a space.
@@ -107,10 +109,12 @@ func GetCodesFromOverhead(msg string) string {
 	return ss[0]
 }
 
+// MiddlewareOpts are the options for the clacks overhead middleware.
 type MiddlewareOpts struct {
+	// GetOverheadMessages will be called to get the overhead messages to include in the response.
 	GetOverheadMessages GetMessagesFn
 	Logger              Logger
-	// Will be called on any X-Clacks-Overhead messages with the 'G' code in the incoming request.
+	// SendOnHandler will be called on any X-Clacks-Overhead messages with the 'G' code in the incoming request (unless nil).
 	SendOnHandler HandleSendOnMessagesFn
 }
 
