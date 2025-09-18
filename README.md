@@ -1,8 +1,10 @@
 # go-clacks-overhead
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/rjkward/go-clacks-overhead.svg)](https://pkg.go.dev/github.com/rjkward/go-clacks-overhead)
+[![Release](https://img.shields.io/github/v/release/rjkward/go-clacks-overhead.svg)](https://github.com/rjkward/go-clacks-overhead/releases)
+[![CI](https://github.com/rjkward/go-clacks-overhead/actions/workflows/ci.yml/badge.svg)](https://github.com/rjkward/go-clacks-overhead/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/github/rjkward/go-clacks-overhead/graph/badge.svg?token=2LH2EIXNLC)](https://codecov.io/github/rjkward/go-clacks-overhead)
 [![Go Report Card](https://goreportcard.com/badge/github.com/rjkward/go-clacks-overhead)](https://goreportcard.com/report/github.com/rjkward/go-clacks-overhead)
-[![Release](https://img.shields.io/github/v/release/rjkward/go-clacks-overhead.svg)](https://github.com/rjkward/go-clacks-overhead/releases)
 
 Drop-in solution to add the [X-Clacks-Overhead](http://www.gnuterrypratchett.com/) header value `GNU Terry Pratchett` to all http requests.
 
